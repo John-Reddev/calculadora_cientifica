@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Científica</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+
+        .calculadora {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .display {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 24px;
+            text-align: right;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .botoes {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            padding: 15px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #e9ecef;
+        }
+
+        .operador {
+            background-color: #e9ecef;
+        }
+
+        .funcao {
+            background-color: #d3e2e8;
+        }
+
+        .igual {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .igual:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculadora">
+        <input type="text" class="display" id="display" readonly>
+        <div class="botoes">
+            <button onclick="adicionarCaractere('7')">7</button>
+            <button onclick="adicionarCaractere('8')">8</button>
+            <button onclick="adicionarCaractere('9')">9</button>
+            <button class="operador" onclick="definirOperacao('divisao')">÷</button>
+            
+            <button onclick="adicionarCaractere('4')">4</button>
+            <button onclick="adicionarCaractere('5')">5</button>
+            <button onclick="adicionarCaractere('6')">6</button>
+            <button class="operador" onclick="definirOperacao('multiplicacao')">×</button>
+            
+            <button onclick="adicionarCaractere('1')">1</button>
+            <button onclick="adicionarCaractere('2')">2</button>
+            <button onclick="adicionarCaractere('3')">3</button>
+            <button class="operador" onclick="definirOperacao('subtracao')">-</button>
+            
+            <button onclick="adicionarCaractere('0')">0</button>
+            <button onclick="adicionarCaractere('.')">.</button>
+            <button class="igual" onclick="calcular()">=</button>
+            <button class="operador" onclick="definirOperacao('soma')">+</button>
+
+            <button class="funcao" onclick="calcularFuncao('seno')">sin</button>
+            <button class="funcao" onclick="calcularFuncao('cosseno')">cos</button>
+            <button class="funcao" onclick="calcularFuncao('tangente')">tan</button>
+            <button class="funcao" onclick="calcularFuncao('raiz_quadrada')">√</button>
+
+            <button class="funcao" onclick="calcularFuncao('logaritmo')">ln</button>
+            <button class="funcao" onclick="definirOperacao('potencia')">x^y</button>
+            <button class="funcao" onclick="calcularFuncao('fatorial')">n!</button>
+            <button onclick="limpar()">C</button>
+        </div>
+    </div>
+
+    <script>
+        let valorAtual = '';
+        let operacaoAtual = null;
+        let primeiroValor = null;
+
+        function adicionarCaractere(caractere) {
+            valorAtual += caractere;
+            atualizarDisplay();
+        }
+
+        function definirOperacao(operacao) {
+            if (valorAtual !== '') {
+                primeiroValor = parseFloat(valorAtual);
+                operacaoAtual = operacao;
+                valorAtual = '';
+            }
+        }
+
+        function calcularFuncao(funcao) {
+            if (valorAtual !== '') {
+                fetch('/calcular', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        operacao: funcao,
+                        valores: [parseFloat(valorAtual)]
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.erro) {
+                        valorAtual = 'Erro';
+                    } else {
+                        valorAtual = data.resultado.toString();
+                    }
+                    atualizarDisplay();
+                });
+            }
+        }
+
+        function calcular() {
+            if (valorAtual !== '' && operacaoAtual && primeiroValor !== null) {
+                fetch('/calcular', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        operacao: operacaoAtual,
+                        valores: [primeiroValor, parseFloat(valorAtual)]
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.erro) {
+                        valorAtual = 'Erro';
+                    } else {
+                        valorAtual = data.resultado.toString();
+                    }
+                    primeiroValor = null;
+                    operacaoAtual = null;
+                    atualizarDisplay();
+                });
+            }
+        }
+
+        function limpar() {
+            valorAtual = '';
+            operacaoAtual = null;
+            primeiroValor = null;
+            atualizarDisplay();
+        }
+
+        function atualizarDisplay() {
+            document.getElementById('display').value = valorAtual;
+        }
+    </script>
+</body>
+</html> 
